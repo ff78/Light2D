@@ -67,27 +67,26 @@ cc.Class({
 
     // 
     signCorners: function () {
-        var self = this;
         var index = 0;
 
-        self.cornerPosMap.forEach(
+        this.cornerPosMap.forEach(
             function(cornerPos, key) {
                 var lightCorner = new LightCorner();
-                lightCorner.lightId = self.lightId;
+                lightCorner.lightId = this.lightId;
                 lightCorner.isLight = false;
-                lightCorner.distance = self.posInWorld.distance(cornerPos);
-                lightCorner.angle = cc.misc.radiansToDegrees(self.posInWorld.signAngle(cornerPos));
+                lightCorner.distance = this.posInWorld.distance(cornerPos);
+                lightCorner.angle = cc.misc.radiansToDegrees(this.posInWorld.signAngle(cornerPos));
         
-                self.cornersLight[index] = lightCorner;
+                this.cornersLight[index] = lightCorner;
                 index++;
 
             }
         );
-        // self.cornerPosMap.forEach(cornerPos => {
+        // this.cornerPosMap.forEach(cornerPos => {
         // });
 
 
-        self.cornersLight.sort(function (a, b) {
+        this.cornersLight.sort(function (a, b) {
             // 角度优先，相同看距离
             if (a.angle == b.angle) {
                 return a.distance - b.distance;
@@ -95,12 +94,12 @@ cc.Class({
             return a.angle - b.angle;
         });
 
-        for (let index = 0; index < self.cornersLight.length; index++) {
-            const element = self.cornersLight[index];
+        for (let index = 0; index < this.cornersLight.length; index++) {
+            const element = this.cornersLight[index];
             element.markNo = index;
         }
 
-        window.globalEvent.emit('SIGN_CORNER', self.lightId, self.cornersLight);
+        window.globalEvent.emit('SIGN_CORNER', this.lightId, this.cornersLight);
     },
 
     turnLight: function (lightId, isTurnOn) {
