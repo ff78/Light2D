@@ -40,9 +40,16 @@ cc.Class({
 
     // update (dt) {},
 
-    clickStart() {
+    clickStart: function() {
         cc.log("-------------------");
-        // globalEvent.emit('SCAN_CORNER');
-        window.globalEvent.emit(Global.UPDATE_BLOCK, this.blockTag, this.corners);
-    }
+        window.globalEvent.emit(Global.TURN_LIGHT, 0, true);
+        // this.node.getChildByName("start").visible = false;
+        // this.node.getChildByName("sign").visible = true;
+        // window.globalEvent.emit(Global.UPDATE_BLOCK, this.blockTag, this.corners);
+    },
+    
+    clickSign: function() {
+        window.globalEvent.emit(Global.DETECT_CORNER);
+        // this.node.getChildByName("sign").visible = false;
+    },
 });

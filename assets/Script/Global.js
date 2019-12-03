@@ -1,6 +1,9 @@
 window.globalEvent = new cc.EventTarget();
 
 module.exports = {
+
+    TURN_LIGHT: "TURN_LIGHT",
+    DETECT_CORNER: "DETECT_CORNER",
     
     LIGHT_WALL: "LIGHT_WALL",
     UPDATE_CORNER: "UPDATE_CORNER",
@@ -9,21 +12,4 @@ module.exports = {
     LIGHT_CORNER: "LIGHT_CORNER",
     DARK_CORNER: "DARK_CORNER",
 
-    Segment: {
-        blockTag: 0,
-        segIndex: 0,
-        start: cc.Vec2,
-        end: cc.Vec2,
-    },
-
-    Block_Corner: {
-        blockTag: 0,
-        cornerIndex: 0,
-        checkNo: 0,
-        pos: cc.Vec2,
-        distance: 0,
-        angle: 0,
-        isLight: false,
-    },
-
-}
+};
