@@ -10,10 +10,12 @@
 
 cc.Class({
     lightId: 0,
+    idInWorld: 0,
     distance: 0,
     angle: 0,
     markNo: 0,
     isLight: false,
+    posInWorld: cc.Vec2,
     
 
 });

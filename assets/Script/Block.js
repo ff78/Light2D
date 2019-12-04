@@ -12,6 +12,8 @@ var Global = require("Global.js");
 
 var Corner = require("Corner.js");
 
+var LightEdge = require("LightEdge.js");
+
 cc.Class({
     extends: cc.Component,
 
@@ -21,15 +23,17 @@ cc.Class({
 
     // LIFE-CYCLE CALLBACKS:
 
-    // onLoad () {},
-
-    start () {
+    onLoad() {
         this.blockTag = 0;
+    },
 
+    start() {
         this.lineGraphics = this.getComponent(cc.Graphics);
         this.drawWhiteWall();
-        
+
         this.initCorners();
+
+        this.initEdges();
 
         // for (let i = 0; i < 4; i++) {
         //     var corName = "corner" + (this.blockTag * 100 + i + 1);
@@ -38,32 +42,37 @@ cc.Class({
         //         setup(this.blockTag, i, this.node.convertToWorldSpaceAR(corner.position));
         // }
     },
-    
-    onEnable: function() {
 
+    onEnable: function () {
+        window.globalEvent.on('TURN_LIGHT', this.turnLight, this);
     },
 
-    onDisable: function() {
-
+    onDisable: function () {
+        window.globalEvent.off('TURN_LIGHT', this.turnLight, this);
     },
 
     // update (dt) {},
 
-    drawWhiteWall: function() {
+    drawWhiteWall: function () {
         var size = this.node.getContentSize();
 
         this.lineGraphics.clear();
         // 画原本灰色边缘
         this.lineGraphics.strokeColor = new cc.Color(0xbb, 0xbb, 0xbb);
-        this.lineGraphics.rect(-size.width/2, -size.height/2, size.width, size.height);
+        this.lineGraphics.rect(-size.width / 2, -size.height / 2, size.width, size.height);
         this.lineGraphics.stroke();
 
     },
 
-    initCorners: function() {
+    initCorners: function () {
 
         var self = this;
-        var cornOff = [[-1,-1], [1, -1], [1, 1], [-1, 1]];
+        var cornOff = [
+            [-1, -1],
+            [1, -1],
+            [1, 1],
+            [-1, 1]
+        ];
         // this.corners = [Corner];
         var size = this.node.getContentSize();
 
@@ -77,13 +86,13 @@ cc.Class({
             // 装4个Corner,给光源检查用
             for (let i = 0; i < 4; i++) {
 
-                var corner = cc.instantiate(prefab);                
-                corner.position = new cc.Vec2(cornOff[i][0] * size.width/2,
-                                                        cornOff[i][1] * size.height/2);
-                                                        corner.name = "corner" + (self.blockTag * 100 + i + 1); // 组合一个唯一Id
-        
+                var corner = cc.instantiate(prefab);
+                corner.position = new cc.Vec2(cornOff[i][0] * size.width / 2,
+                    cornOff[i][1] * size.height / 2);
+                corner.name = "corner" + (self.blockTag * 100 + i + 1); // 组合一个唯一Id
+
                 self.node.addChild(corner);
-                
+
                 var corScript = corner.getComponent("Corner");
                 corScript.setup(self.blockTag, i, self.node.convertToWorldSpaceAR(corner.position));
                 // self.corners[i].getComponent("Corner").setup(self.blockTag, i, self.node.convertToWorldSpaceAR(self.corners[i].position));
@@ -93,4 +102,33 @@ cc.Class({
 
     },
 
+    initEdges: function () {
+        var cornOff = [
+            [-1, -1],
+            [1, -1],
+            [1, 1],
+            [-1, 1]
+        ];
+        var size = this.node.getContentSize();
+
+        this.edges = [LightEdge];
+        for (let i = 0; i < 4; i++) {
+            var edge = new LightEdge();
+            edge.idInWorld = this.blockTag * 100 + i + 1;
+            edge.isLight = false;
+            edge.firstPos = this.node.convertToWorldSpaceAR(cc.Vec2(cornOff[i][0] * size.width / 2,
+                cornOff[i][1] * size.height / 2));
+            edge.secondPos = this.node.convertToWorldSpaceAR(cc.Vec2(cornOff[(i + 1) % 4][0] * size.width / 2,
+                cornOff[(i + 1) % 4][1] * size.height / 2));
+            this.edges[i] = edge;
+        }
+
+    },
+
+    turnLight: function (lightId, isTurnOn) {
+        if (isTurnOn == false) {
+            return;
+        }
+        window.globalEvent.emit("UPDATE_EDGES", lightId, this.edges);
+    }
 });

@@ -52,4 +52,8 @@ cc.Class({
         window.globalEvent.emit(Global.DETECT_CORNER);
         // this.node.getChildByName("sign").visible = false;
     },
+    clickCheck: function() {
+        window.globalEvent.emit(Global.CHECK_CORNER);
+        // this.node.getChildByName("sign").visible = false;
+    },
 });

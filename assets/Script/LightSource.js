@@ -10,6 +10,7 @@
 var Global = require("Global.js");
 
 var LightCorner = require("LightCorner.js");
+var LightEdge = require("LightEdge.js");
 
 cc.Class({
     extends: cc.Component,
@@ -22,9 +23,7 @@ cc.Class({
 
     // LIFE-CYCLE CALLBACKS:
 
-    // onLoad () {},
-
-    start() {
+    onLoad() {
         // 唯一cornerId和worldPos键值对表
         this.cornerPosMap = new Map();
         // 点亮
@@ -34,6 +33,11 @@ cc.Class({
         // corner信息数组
         this.cornersLight = [LightCorner];
 
+        this.edges = [LightEdge];
+    },
+
+    start() {
+
     },
 
     // update (dt) {},
@@ -41,14 +45,19 @@ cc.Class({
     onEnable: function () {
         window.globalEvent.on(Global.TURN_LIGHT, this.turnLight, this);
         window.globalEvent.on(Global.UPDATE_CORNER, this.updateCorner, this);
+        window.globalEvent.on(Global.UPDATE_EDGES, this.updateEdges, this);
+
 
         window.globalEvent.on(Global.DETECT_CORNER, this.signCorners, this);
+        window.globalEvent.on(Global.CHECK_CORNER, this.checkCorners, this);
     },
-    
+
     onDisable: function () {
         window.globalEvent.off(Global.TURN_LIGHT, this.turnLight, this);
         window.globalEvent.off(Global.UPDATE_CORNER, this.updateCorner, this);
+        window.globalEvent.off(Global.UPDATE_EDGES, this.updateEdges, this);
         window.globalEvent.off(Global.DETECT_CORNER, this.signCorners, this);
+        window.globalEvent.off(Global.CHECK_CORNER, this.checkCorners, this);
     },
 
 
@@ -65,23 +74,65 @@ cc.Class({
         }
     },
 
+    updateEdges: function (lightId, edges) {
+        if (this.lightId !== lightId) {
+            return;
+        }
+
+        edges.forEach(edge => {
+            this.edges[edge.idInWorld] = edge;
+        });
+    },
+
+    checkCorners: function() {
+        // 遍历确定点是否被光源点亮
+        this.cornersLight.forEach(corner => {
+
+            corner.isLight = true;
+
+            this.edges.forEach(edge => {
+                // 排除角所在边
+                let isInclude = false;
+                if (cc.v2(corner.posInWorld) == edge.firstVec || cc.v2(corner.posInWorld) == edge.secondVec) {
+                    isInclude = true;
+                }
+
+                // 线段相交，说明被挡
+                let isCollide = cc.Intersection.lineLine(corner.posInWorld, this.posInWorld, edge.firstVec, edge.secondVec);
+                if (isCollide === true && isInclude === false) {
+                    corner.isLight = false;
+                    break;
+                }
+            });
+
+        });
+
+        window.globalEvent.emit('LIGHT_CORNER', this.lightId, this.cornersLight);
+    },
+
     // 
     signCorners: function () {
         var index = 0;
 
         this.cornerPosMap.forEach(
-            function(cornerPos, key) {
+            function (cornerPos, key) {
                 var lightCorner = new LightCorner();
+                lightCorner.idInWorld = key;
                 lightCorner.lightId = this.lightId;
                 lightCorner.isLight = false;
-                lightCorner.distance = this.posInWorld.distance(cornerPos);
-                lightCorner.angle = cc.misc.radiansToDegrees(this.posInWorld.signAngle(cornerPos));
-        
+                lightCorner.posInWorld = cornerPos;
+
+                let cornerVec = cc.v2(cornerPos.sub(this.posInWorld));
+                lightCorner.distance = cornerVec.mag();
+                let comVec = cc.v2(0, 1);    // 水平向右的对比向量
+                var cornerRadians = cornerVec.signAngle(comVec);
+                lightCorner.angle = cc.misc.radiansToDegrees(cornerRadians);
+
                 this.cornersLight[index] = lightCorner;
                 index++;
 
             }
-        );
+        , this);
         // this.cornerPosMap.forEach(cornerPos => {
         // });
 
@@ -113,5 +164,5 @@ cc.Class({
         } else {
 
         }
-    }
+    },
 });

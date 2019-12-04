@@ -9,5 +9,9 @@
 //  - [English] https://www.cocos2d-x.org/docs/creator/manual/en/scripting/life-cycle-callbacks.html
 
 cc.Class({
-
+    lightId: 0,
+    isLight: false,
+    idInWorld: 0,
+    firstVec: cc.Vec2,
+    secondVec: cc.Vec2,
 });

@@ -19,9 +19,7 @@ cc.Class({
 
     // LIFE-CYCLE CALLBACKS:
 
-    // onLoad () {},
-
-    start() {
+    onLoad() {
 
         this.CornerState = {
             UNCHECKED: 1,
@@ -61,17 +59,23 @@ cc.Class({
 
         // this.lightCorners = new Map();
 
+    },
+
+    start() {
+
         this.changeState(this.CornerState.UNCHECKED);
     },
 
     onEnable: function () {
         window.globalEvent.on('TURN_LIGHT', this.turnLight, this);
         window.globalEvent.on('SIGN_CORNER', this.signCorner, this);
+        window.globalEvent.on('LIGHT_CORNER', this.lightCorner, this);
     },
 
     onDisable: function () {
         window.globalEvent.off('TURN_LIGHT', this.turnLight, this);
         window.globalEvent.off('SIGN_CORNER', this.signCorner, this);
+        window.globalEvent.off('LIGHT_CORNER', this.lightCorner, this);
     },
 
     // update (dt) {},
@@ -95,7 +99,7 @@ cc.Class({
 
             case this.CornerState.CHECKING:
                 var imPoint = this.node.getChildByName("imPoint");
-                imPoint.color = cc.Color.RED;
+                imPoint.color = this.isLight ? cc.Color.YELLOW : cc.Color.MAGENTA;
                 var labelNo = this.node.getChildByName("labelNo").getComponent(cc.Label)
                 labelNo.string = this.markNo.toString();
                 break;
@@ -122,6 +126,21 @@ cc.Class({
         this.posInWorld = pos;
     },
 
+    lightCorner: function (lightId, cornersLight) {
+        // 不用看的，跳过
+        if (this.directLightId !== lightId) {
+            return;
+        }
+
+        for (let index = 0; index < cornersLight.length; index++) {
+            const element = cornersLight[index];
+            if (element.idInWorld === this.idInWorld) {
+                this.isLight = element.isLight;
+                this.changeState(this.CornerState.CHECKING);
+            }
+        }
+    },
+    
     signCorner: function (lightId, cornersLight) {
 
         // 不用看的，跳过
