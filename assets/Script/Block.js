@@ -114,12 +114,15 @@ cc.Class({
         this.edges = [LightEdge];
         for (let i = 0; i < 4; i++) {
             var edge = new LightEdge();
+            edge.blockTag = this.blockTag;
             edge.idInWorld = this.blockTag * 100 + i + 1;
             edge.isLight = false;
-            edge.firstPos = this.node.convertToWorldSpaceAR(cc.Vec2(cornOff[i][0] * size.width / 2,
-                cornOff[i][1] * size.height / 2));
-            edge.secondPos = this.node.convertToWorldSpaceAR(cc.Vec2(cornOff[(i + 1) % 4][0] * size.width / 2,
-                cornOff[(i + 1) % 4][1] * size.height / 2));
+            var pos = new cc.Vec2(cornOff[i][0] * size.width / 2,
+                cornOff[i][1] * size.height / 2);
+            var nextPos = new cc.Vec2(cornOff[(i + 1) % 4][0] * size.width / 2,
+                cornOff[(i + 1) % 4][1] * size.height / 2)
+            edge.firstPos = this.node.convertToWorldSpaceAR(pos);
+            edge.secondPos = this.node.convertToWorldSpaceAR(nextPos);
             this.edges[i] = edge;
         }
 

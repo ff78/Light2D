@@ -78,36 +78,62 @@ cc.Class({
         if (this.lightId !== lightId) {
             return;
         }
+        var self = this;
 
+        // var existEdges = undefined;
         edges.forEach(edge => {
-            this.edges[edge.idInWorld] = edge;
+            var existEdges = self.edges.filter(item => {
+                if (item.blockTag == edge.blockTag) {
+                    if (item.idInWorld == edges.idInWorld) {
+                        item.firstVec = new cc.Vec2(edge.firstVec.x, edge.firstVec.y);
+                        item.secondVec = new cc.Vec2(edge.secondVec.x, edge.secondVec.y);
+                    }
+                    return true;
+                }
+                return false;
+            });
+            if (existEdges === undefined || existEdges.length == 0) {
+                var litEdge = new LightEdge();
+                litEdge.lightId = 0;
+                litEdge.isLight = false;
+                litEdge.idInWorld = edge.idInWorld;
+                litEdge.firstVec = new cc.Vec2(edge.firstVec.x, edge.firstVec.y);
+                litEdge.secondVec = new cc.Vec2(edge.secondVec.x, edge.secondVec.y);
+                self.edges.push(litEdge);
+            };
+
         });
     },
 
-    checkCorners: function() {
+    checkCorners: function () {
+        // cc.log("遍历确定点是否被光源点亮");
         // 遍历确定点是否被光源点亮
-        this.cornersLight.forEach(corner => {
+        var self = this;
+
+        self.cornersLight.forEach(corner => {
 
             corner.isLight = true;
 
-            this.edges.forEach(edge => {
+            self.edges.some((edge) => {
                 // 排除角所在边
-                let isInclude = false;
+                var isInclude = false;
                 if (cc.v2(corner.posInWorld) == edge.firstVec || cc.v2(corner.posInWorld) == edge.secondVec) {
                     isInclude = true;
                 }
 
                 // 线段相交，说明被挡
-                let isCollide = cc.Intersection.lineLine(corner.posInWorld, this.posInWorld, edge.firstVec, edge.secondVec);
-                if (isCollide === true && isInclude === false) {
+                var isCollide = cc.Intersection.lineLine(corner.posInWorld, self.posInWorld, edge.firstVec, edge.secondVec);
+                if (isCollide == true && isInclude == false) {
                     corner.isLight = false;
-                    break;
+                    return true;
                 }
+
+                return false;
             });
 
         });
 
-        window.globalEvent.emit('LIGHT_CORNER', this.lightId, this.cornersLight);
+        window.globalEvent.emit('LIGHT_CORNER', self.lightId, self.cornersLight);
     },
 
     // 
@@ -124,15 +150,14 @@ cc.Class({
 
                 let cornerVec = cc.v2(cornerPos.sub(this.posInWorld));
                 lightCorner.distance = cornerVec.mag();
-                let comVec = cc.v2(0, 1);    // 水平向右的对比向量
+                let comVec = cc.v2(0, 1); // 水平向右的对比向量
                 var cornerRadians = cornerVec.signAngle(comVec);
                 lightCorner.angle = cc.misc.radiansToDegrees(cornerRadians);
 
                 this.cornersLight[index] = lightCorner;
                 index++;
 
-            }
-        , this);
+            }, this);
         // this.cornerPosMap.forEach(cornerPos => {
         // });
 

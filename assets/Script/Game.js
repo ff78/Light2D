@@ -49,10 +49,12 @@ cc.Class({
     },
     
     clickSign: function() {
+        cc.log("----------clickSign---------");
         window.globalEvent.emit(Global.DETECT_CORNER);
         // this.node.getChildByName("sign").visible = false;
     },
     clickCheck: function() {
+        cc.log("----------clickCheck clickCheck---------");
         window.globalEvent.emit(Global.CHECK_CORNER);
         // this.node.getChildByName("sign").visible = false;
     },

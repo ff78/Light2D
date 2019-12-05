@@ -137,6 +137,7 @@ cc.Class({
             if (element.idInWorld === this.idInWorld) {
                 this.isLight = element.isLight;
                 this.changeState(this.CornerState.CHECKING);
+                break;
             }
         }
     },
