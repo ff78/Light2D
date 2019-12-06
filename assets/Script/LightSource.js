@@ -50,6 +50,7 @@ cc.Class({
 
         window.globalEvent.on(Global.DETECT_CORNER, this.signCorners, this);
         window.globalEvent.on(Global.CHECK_CORNER, this.checkCorners, this);
+        window.globalEvent.on(Global.LIGHT_WALL, this.lightWall, this);
     },
 
     onDisable: function () {
@@ -58,6 +59,7 @@ cc.Class({
         window.globalEvent.off(Global.UPDATE_EDGES, this.updateEdges, this);
         window.globalEvent.off(Global.DETECT_CORNER, this.signCorners, this);
         window.globalEvent.off(Global.CHECK_CORNER, this.checkCorners, this);
+        window.globalEvent.off(Global.LIGHT_WALL, this.lightWall, this);
     },
 
 
@@ -103,6 +105,26 @@ cc.Class({
             };
 
         });
+    },
+
+    lightWall: function() {
+        // 从第二个角开始
+        for (let i = 1; i < this.cornersLight.length; i++) {
+            const corner = this.cornersLight[i];
+            // 当前角不亮，就跳过
+            if (corner.isLight == false) {
+                continue;
+            }
+
+            const lastCorner = this.cornersLight[i-1];
+            if (lastCorner.isLight == true) {
+                
+            } else {
+
+            }
+
+        }
+
     },
 
     checkCorners: function () {

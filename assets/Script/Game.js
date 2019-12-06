@@ -58,4 +58,11 @@ cc.Class({
         window.globalEvent.emit(Global.CHECK_CORNER);
         // this.node.getChildByName("sign").visible = false;
     },
+    
+    clickDraw: function() {
+        cc.log("----------clickDraw clickDraw---------");
+        window.globalEvent.emit(Global.LIGHT_WALL);
+        // this.node.getChildByName("sign").visible = false;
+
+    },
 });
