@@ -13,6 +13,6 @@ cc.Class({
     isLight: false,
     blockTag: 0,
     idInWorld: 0,
-    firstVec: cc.Vec2,
-    secondVec: cc.Vec2,
+    secondPos: cc.Vec2,
+    secondPos: cc.Vec2,
 });
