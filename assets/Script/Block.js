@@ -93,8 +93,11 @@ cc.Class({
 
                 self.node.addChild(corner);
 
+                var edgeId = [];
+                edgeId.push(self.blockTag * 100 + i + 1);
+                edgeId.push(self.blockTag * 100 + (i + 3) % 4 + 1);
                 var corScript = corner.getComponent("Corner");
-                corScript.setup(self.blockTag, i, self.node.convertToWorldSpaceAR(corner.position));
+                corScript.setup(self.blockTag, i, self.node.convertToWorldSpaceAR(corner.position), edgeId);
                 // self.corners[i].getComponent("Corner").setup(self.blockTag, i, self.node.convertToWorldSpaceAR(self.corners[i].position));
             }
 

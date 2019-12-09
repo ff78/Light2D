@@ -26,6 +26,7 @@ cc.Class({
     onLoad() {
         // 唯一cornerId和worldPos键值对表
         this.cornerPosMap = new Map();
+        this.cornerEdgeId = new Map();
         // 点亮
         this.isTurnOn = false;
         // world坐标
@@ -34,6 +35,9 @@ cc.Class({
         this.cornersLight = [];
 
         this.edges = [];
+
+        // 有效发光点
+        this.lightPoints = [];
     },
 
     start() {
@@ -67,12 +71,20 @@ cc.Class({
         this.lightId = lightId;
     },
 
-    updateCorner: function (cornerId, pos) {
+    updateCorner: function (cornerId, pos, edgeId) {
         if (this.cornerPosMap.get(cornerId) === undefined) {
             // 没出现过的corner
             this.cornerPosMap.set(cornerId, pos);
         } else {
             this.cornerPosMap[cornerId] = pos;
+        }
+        var edgesId = [];
+        edgesId = [...edgeId];
+        if (this.cornerEdgeId.get(cornerId) === undefined) {
+            // 没出现过的corner
+            this.cornerEdgeId.set(cornerId, edgesId);
+        } else {
+            this.cornerEdgeId[cornerId] = edgesId;
         }
     },
 
@@ -108,20 +120,47 @@ cc.Class({
     },
 
     lightWall: function() {
-        // 从第二个角开始
-        for (let i = 1; i < this.cornersLight.length; i++) {
+        // 清空发光点
+        this.lightPoints.length = 0;
+        
+        // 发光点全放进数组
+        for (let i = 0; i < this.cornersLight.length; i++) {
             const corner = this.cornersLight[i];
             // 当前角不亮，就跳过
             if (corner.isLight == false) {
                 continue;
             }
 
-            const lastCorner = this.cornersLight[i-1];
-            if (lastCorner.isLight == true) {
-                
-            } else {
-
+            // 如果之前的发光点和这个点不在同边，找到一个新的发光点，先放进去
+            var sameEdgeId = -1;
+            if (this.lightPoints.length > 0) {
+                var lastPoint =  this.lightPoints[this.lightPoints.length-1];
+                for (let index = 0; index < lastPoint.edgeId.length; index++) {
+                    const lastEdge = lastPoint.edgeId[index];
+                    for (let k = 0; k < corner.edgeId.length; k++) {
+                        const cornerEdge = corner.edgeId[k];
+                        if (lastEdge != cornerEdge) {
+                            sameEdgeId = lastEdge;
+                            break;
+                        }
+                    }
+                    if (sameEdgeId != -1) {
+                        break;
+                    }
+                }
+                if (sameEdgeId != -1) {
+                    this.edges[sameEdgeId];
+                }
             }
+            // 把角作为发光点放进去
+            var point = new LightCorner();
+            point.lightId = corner.lightId;
+            point.idInWorld = corner.idInWorld;
+            point.markNo = corner.markNo;
+            point.isLight = true;
+            point.posInWorld = corner.posInWorld;
+            point.edgeId = [... corner.edgeId];
+            this.lightPoints.push(point);
 
         }
 
@@ -140,7 +179,7 @@ cc.Class({
                 const edge = self.edges[index];
                 // 排除角所在边
                 var isInclude = false;
-                if (cc.v2(corner.posInWorld).equals(edge.firstPos) || cc.v2(corner.posInWorld).equals(edge.secondPos)) {
+                if (corner.edgeId.indexOf(edge.idInWorld) != -1) {
                     isInclude = true;
                 }
     
@@ -174,6 +213,7 @@ cc.Class({
                 lightCorner.lightId = this.lightId;
                 lightCorner.isLight = false;
                 lightCorner.posInWorld = cornerPos;
+                lightCorner.edgeId = [...this.cornerEdgeId.get(key)];
 
                 let cornerVec = cc.v2(cornerPos.sub(this.posInWorld));
                 lightCorner.distance = cornerVec.mag();

@@ -57,6 +57,8 @@ cc.Class({
 
         this.directLightId = 0; // 显示指引的光源Id
 
+        this.edgeId = []; // 所在边
+
         // this.lightCorners = new Map();
 
     },
@@ -118,12 +120,13 @@ cc.Class({
         this.state = simpleState;
     },
 
-    setup: function (blockTag, cornerIndex, pos) {
+    setup: function (blockTag, cornerIndex, pos, edgeId) {
         // var self = this;
         this.blockTag = blockTag;
         this.cornerIndex = cornerIndex;
         this.idInWorld = blockTag * 100 + cornerIndex + 1;
         this.posInWorld = pos;
+        this.edgeId = [...edgeId];
     },
 
     lightCorner: function (lightId, cornersLight) {
@@ -175,6 +178,6 @@ cc.Class({
             return;
         }
 
-        window.globalEvent.emit("UPDATE_CORNER", this.idInWorld, this.posInWorld);
+        window.globalEvent.emit("UPDATE_CORNER", this.idInWorld, this.posInWorld, this.edgeId);
     }
 });
