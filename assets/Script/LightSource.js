@@ -119,10 +119,10 @@ cc.Class({
         });
     },
 
-    lightWall: function() {
+    lightWall: function () {
         // 清空发光点
         this.lightPoints.length = 0;
-        
+
         // 发光点全放进数组
         for (let i = 0; i < this.cornersLight.length; i++) {
             const corner = this.cornersLight[i];
@@ -131,25 +131,58 @@ cc.Class({
                 continue;
             }
 
-            // 如果之前的发光点和这个点不在同边，找到一个新的发光点，先放进去
-            var sameEdgeId = -1;
+            // 如果之前的发光点和这个角在不同边，从上一发光点和角分别向外扩张1发光点。
+            // 扩张的发光点有可能正好在另一点的所在边，也可能扩张的发光点都落在同一边
+            // 只可能有三种情况： Aex----B， Aex----Bex， A----Bex
+            var diffEdgeId = -1;
             if (this.lightPoints.length > 0) {
-                var lastPoint =  this.lightPoints[this.lightPoints.length-1];
+                // 上一个发光点
+                var lastPoint = this.lightPoints[this.lightPoints.length - 1];
+                // 上一个发光点和这个角是不是在不同边
                 for (let index = 0; index < lastPoint.edgeId.length; index++) {
                     const lastEdge = lastPoint.edgeId[index];
                     for (let k = 0; k < corner.edgeId.length; k++) {
                         const cornerEdge = corner.edgeId[k];
                         if (lastEdge != cornerEdge) {
-                            sameEdgeId = lastEdge;
+                            diffEdgeId = lastEdge;
                             break;
                         }
                     }
-                    if (sameEdgeId != -1) {
+                    if (diffEdgeId != -1) {
                         break;
                     }
                 }
-                if (sameEdgeId != -1) {
-                    this.edges[sameEdgeId];
+
+                // 不在同边，有光窗
+                if (diffEdgeId != -1) {
+
+                    var extendPoint1 = cc.Vec2.ZERO;
+                    // 从光源射向上一发光点的向量
+                    var dirVec1 = lastPoint.posInWorld - this.posInWorld;
+                    for (let i = 0; i < this.edges.length; i++) {
+                        const checkEdge = this.edges[i];
+                        // 排除上一发光点所在边
+                        if (lastPoint.indexOf(checkEdge) != 0) {
+                            continue;
+                        }
+                        // 光源到线段端点的向量
+                        var edgeVec1 = checkEdge.firstPos - this.posInWorld;
+                        var edgeVec2 = checkEdge.secondPos - this.posInWorld;
+                        var x1 = edgeVec1.cross(dirVec1);
+                        var x2 = edgeVec2.cross(dirVec1);
+                        // 两夹角方向相同，说明光不在线段内，可忽略
+                        if (x1 * x2 > 0) {
+                            continue;
+                        }
+
+                        var edgeVec = checkEdge.secondPos - checkEdge.firstPos;
+
+                        if (this.LineLineIntersection(extendPoint1, lastPoint.posInWorld, dirVec1, checkEdge.firstPos, edgeVec)) {
+                            
+                        }
+                    }
+
+
                 }
             }
             // 把角作为发光点放进去
@@ -159,7 +192,7 @@ cc.Class({
             point.markNo = corner.markNo;
             point.isLight = true;
             point.posInWorld = corner.posInWorld;
-            point.edgeId = [... corner.edgeId];
+            point.edgeId = [...corner.edgeId];
             this.lightPoints.push(point);
 
         }
@@ -182,7 +215,7 @@ cc.Class({
                 if (corner.edgeId.indexOf(edge.idInWorld) != -1) {
                     isInclude = true;
                 }
-    
+
                 // 线段相交，说明被挡
                 var isCollide = cc.Intersection.lineLine(corner.posInWorld, self.posInWorld, edge.firstPos, edge.secondPos);
                 if (isCollide == true && isInclude == false) {
@@ -190,7 +223,7 @@ cc.Class({
                     break;
                     // return true;
                 }
-                
+
             }
             // self.edges.some((edge) => {
 
@@ -256,5 +289,25 @@ cc.Class({
         } else {
 
         }
+    },
+
+    LineLineIntersection: function (intersection, p1, dirVec1, p2, dirVec2) {
+        intersection = cc.Vec2.ZERO;
+
+        // 平行
+        if (dirVec1.dot(dirVec2) == 1) {
+            return false;
+        }
+
+        var startPointSeg = p2 - p1;
+        var vecS1 = dirVec1.cross(dirVec2); // 有向面积1
+        var vecS2 = startPointSeg.cross(dirVec2); // 有向面积2
+
+        // 有向面积比值，利用点乘是因为结果可能是正数或者负数
+        var num2 = vecS2.Dot(vecS1) / vecS1.magSqr();
+
+        intersection = p1 + dirVec1 * num2;
+
+        return true;
     },
 });
