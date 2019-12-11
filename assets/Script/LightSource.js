@@ -131,60 +131,11 @@ cc.Class({
                 continue;
             }
 
-            // 如果之前的发光点和这个角在不同边，从上一发光点和角分别向外扩张1发光点。
-            // 扩张的发光点有可能正好在另一点的所在边，也可能扩张的发光点都落在同一边
-            // 只可能有三种情况： Aex----B， Aex----Bex， A----Bex
-            var diffEdgeId = -1;
             if (this.lightPoints.length > 0) {
-                // 上一个发光点
                 var lastPoint = this.lightPoints[this.lightPoints.length - 1];
-                // 上一个发光点和这个角是不是在不同边
-                for (let index = 0; index < lastPoint.edgeId.length; index++) {
-                    const lastEdge = lastPoint.edgeId[index];
-                    for (let k = 0; k < corner.edgeId.length; k++) {
-                        const cornerEdge = corner.edgeId[k];
-                        if (lastEdge != cornerEdge) {
-                            diffEdgeId = lastEdge;
-                            break;
-                        }
-                    }
-                    if (diffEdgeId != -1) {
-                        break;
-                    }
-                }
-
-                // 不在同边，有光窗
-                if (diffEdgeId != -1) {
-
-                    var extendPoint1 = cc.Vec2.ZERO;
-                    // 从光源射向上一发光点的向量
-                    var dirVec1 = lastPoint.posInWorld - this.posInWorld;
-                    for (let i = 0; i < this.edges.length; i++) {
-                        const checkEdge = this.edges[i];
-                        // 排除上一发光点所在边
-                        if (lastPoint.indexOf(checkEdge) != 0) {
-                            continue;
-                        }
-                        // 光源到线段端点的向量
-                        var edgeVec1 = checkEdge.firstPos - this.posInWorld;
-                        var edgeVec2 = checkEdge.secondPos - this.posInWorld;
-                        var x1 = edgeVec1.cross(dirVec1);
-                        var x2 = edgeVec2.cross(dirVec1);
-                        // 两夹角方向相同，说明光不在线段内，可忽略
-                        if (x1 * x2 > 0) {
-                            continue;
-                        }
-
-                        var edgeVec = checkEdge.secondPos - checkEdge.firstPos;
-
-                        if (this.LineLineIntersection(extendPoint1, lastPoint.posInWorld, dirVec1, checkEdge.firstPos, edgeVec)) {
-                            
-                        }
-                    }
-
-
-                }
+                this.pushExtendPoint(lastPoint, corner);
             }
+
             // 把角作为发光点放进去
             var point = new LightCorner();
             point.lightId = corner.lightId;
@@ -194,6 +145,15 @@ cc.Class({
             point.posInWorld = corner.posInWorld;
             point.edgeId = [...corner.edgeId];
             this.lightPoints.push(point);
+
+        }
+
+        // 最后一个发光点(角)需要检查到第一个发光点，形成一个封闭图形
+        if (this.lightPoints.length > 0) {
+
+            var lastPoint = this.lightPoints[this.lightPoints.length - 1];
+            var originPoint = this.lightPoints[0];
+            this.pushExtendPoint(lastPoint, originPoint);
 
         }
 
@@ -310,4 +270,103 @@ cc.Class({
 
         return true;
     },
+
+    findExtendPoint: function (point1, dirVec1, pointEdges, extendPoint) {
+        // 最后发光点能不能直接投到角的所在边
+        var tempPoint = cc.Vec2.ZERO;
+        var nearPoint = cc.Vec2.ZERO;
+        var nearEdgeId = 0;
+
+        var nearDistance = 0;
+
+        for (let i = 0; i < pointEdges.length; i++) {
+            const checkEdge = pointEdges[i];
+
+            if (point1.edgeId.indexOf(checkEdge) != -1) {
+                // 排除发光点所在边
+                continue;
+            }
+
+            var pos1 = this.edges[checkEdge].firstPos;
+            var pos2 = this.edges[checkEdge].secondPos;
+
+            var edgeVec1 = pos1.sub(this.posInWorld);
+            var edgeVec2 = pos2.sub(this.posInWorld);
+
+            var x1 = edgeVec1.cross(dirVec1);
+            var x2 = edgeVec2.cross(dirVec1);
+            // 两夹角方向相同，说明光不会经过线段，可忽略
+            if (x1 * x2 > 0) {
+                continue;
+            }
+
+            var edgeVec = checkEdge.secondPos.sub(checkEdge.firstPos);
+
+            // 找到最近的交点
+            if (this.LineLineIntersection(tempPoint, point1.posInWorld, dirVec1, checkEdge.firstPos, edgeVec)) {
+                let lenVec = cc.v2(tempPoint.sub(this.posInWorld));
+                var distance = lenVec.mag();
+                if (nearEdgeId == 0) {
+                    nearPoint = cc.v2(tempPoint);
+                    nearDistance = distance;
+                    nearEdgeId = checkEdge;
+                } else if (distance < nearDistance) {
+                    nearPoint = cc.v2(tempPoint);
+                    nearDistance = distance;
+                    nearEdgeId = checkEdge;
+                }
+            }
+        }
+
+        if (nearEdgeId > 0) {
+            extendPoint.lightId = this.lightId;
+            extendPoint.distance = nearDistance;
+            extendPoint.isLight = true;
+            extendPoint.posInWorld = cc.v2(nearPoint);
+            extendPoint.edgeId.push(nearEdgeId);
+        }
+
+        return nearEdgeId != 0;
+    },
+
+    pushExtendPoint: function (lastPoint, originPoint) {
+
+        // 最后一个发光点和这个角是不是在不同边
+        for (let index = 0; index < lastPoint.edgeId.length; index++) {
+            const lastEdge = lastPoint.edgeId[index];
+            if (originPoint.edgeId.indexOf(lastEdge) != -1){
+                return;
+            }
+        }
+
+        // 如果最后发光点和这个角在不同边，从最后发光点和角分别向外扩张1发光点。
+        // 只可能有三种情况： Aex----B， Aex----Bex， A----Bex
+
+        // 从光源射向最后发光点的向量
+        var extend1 = false;
+        var extendPoint1 = new LightCorner();
+        var dirVec1 = lastPoint.posInWorld.sub(this.posInWorld);
+
+        var extend2 = false;
+        var extendPoint2 = new LightCorner();
+        var dirVec2 = originPoint.posInWorld.sub(this.posInWorld);
+
+        if (this.findExtendPoint(lastPoint, dirVec1, originPoint.edgeId, extendPoint1)) {
+            // 最后发光点直接投到角的所在边
+            this.lightPoints.push(extendPoint1);
+        } else if (this.findExtendPoint(originPoint, dirVec2, lastPoint.edgeId, extendPoint2)) {
+            // 角直接投到最后发光点的所在边
+            this.lightPoints.push(extendPoint2);
+        } else {
+            // 投射到其他边
+            extend1 = this.findExtendPoint(lastPoint, dirVec1, this.edges, extendPoint1);
+            extend2 = this.findExtendPoint(originPoint, dirVec2, this.edges, extendPoint2);
+            if (extend1 != extend2) {
+                cc.warn("投射到其他边出问题");
+            }
+            this.lightPoints.push(extendPoint1);
+            this.lightPoints.push(extendPoint2);
+        }
+
+    }
 });
