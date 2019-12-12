@@ -18,13 +18,13 @@ cc.Class({
     extends: cc.Component,
 
     properties: {
-
+        blockTag: 0,
     },
 
     // LIFE-CYCLE CALLBACKS:
 
     onLoad() {
-        this.blockTag = 0;
+        // this.blockTag = 0;
     },
 
     start() {
@@ -98,6 +98,7 @@ cc.Class({
                 edgeId.push(self.blockTag * 100 + (i + 3) % 4 + 1);
                 var corScript = corner.getComponent("Corner");
                 corScript.setup(self.blockTag, i, self.node.convertToWorldSpaceAR(corner.position), edgeId);
+                // corScript.setup(self.blockTag, i, corner.position, edgeId);
                 // self.corners[i].getComponent("Corner").setup(self.blockTag, i, self.node.convertToWorldSpaceAR(self.corners[i].position));
             }
 
@@ -126,6 +127,8 @@ cc.Class({
                 cornOff[(i + 1) % 4][1] * size.height / 2)
             edge.firstPos = this.node.convertToWorldSpaceAR(pos);
             edge.secondPos = this.node.convertToWorldSpaceAR(nextPos);
+            // edge.firstPos = pos;
+            // edge.secondPos = nextPos;
             this.edges[i] = edge;
         }
 

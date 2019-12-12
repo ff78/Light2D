@@ -29,19 +29,22 @@ cc.Class({
         this.cornerEdgeId = new Map();
         // 点亮
         this.isTurnOn = false;
-        // world坐标
-        this.posInWorld = this.node.parent.convertToWorldSpaceAR(this.node.position);
         // corner信息数组
         this.cornersLight = [];
-
+        
         this.edges = [];
-
+        
         // 有效发光点
         this.lightPoints = [];
     },
-
+    
     start() {
-
+        // world坐标
+        this.posInWorld = this.node.parent.convertToWorldSpaceAR(this.node.position);
+        // this.posInWorld = this.node.position;
+        
+        var drawNode = this.node.getChildByName("drawNode");
+        this.lineGraphics = drawNode.getComponent(cc.Graphics);
     },
 
     // update (dt) {},
@@ -157,6 +160,36 @@ cc.Class({
 
         }
 
+        this.lineGraphics.clear();
+
+        for (let k = 0; k < this.lightPoints.length; k++) {
+            const linePoint = this.lightPoints[k];
+            const lineNextPoint = this.lightPoints[(k + 1) % this.lightPoints.length];
+            var pointPos = this.node.getChildByName("drawNode").convertToNodeSpaceAR(linePoint.posInWorld); 
+            var nextPointPos = this.node.getChildByName("drawNode").convertToNodeSpaceAR(lineNextPoint.posInWorld);
+            this.lineGraphics.strokeColor =  new cc.Color(0xaa, 0xaa, 0xaa);
+            this.lineGraphics.lineWidth = 1;
+            this.lineGraphics.moveTo(0,0);
+            this.lineGraphics.lineTo(pointPos.x, pointPos.y);
+            this.lineGraphics.stroke();
+
+            var sameEdge = false;
+            for (let index = 0; index < linePoint.edgeId.length; index++) {
+                const element = linePoint.edgeId[index];
+                if (lineNextPoint.edgeId.indexOf(element) != -1) {
+                    sameEdge = true;
+                    break;
+                }
+            }
+
+            if (sameEdge) {
+                this.lineGraphics.strokeColor =  new cc.Color(0xee, 0xee, 0x0);
+                this.lineGraphics.lineWidth = 2;
+                this.lineGraphics.moveTo(pointPos.x, pointPos.y);
+                this.lineGraphics.lineTo(nextPointPos.x, nextPointPos.y);
+                this.lineGraphics.stroke();
+            }
+        }
     },
 
     checkCorners: function () {
@@ -252,43 +285,61 @@ cc.Class({
     },
 
     LineLineIntersection: function (intersection, p1, dirVec1, p2, dirVec2) {
-        intersection = cc.Vec2.ZERO;
 
         // 平行
         if (dirVec1.dot(dirVec2) == 1) {
             return false;
         }
 
-        var startPointSeg = p2 - p1;
+        var startPointSeg = p2.sub(p1);
         var vecS1 = dirVec1.cross(dirVec2); // 有向面积1
         var vecS2 = startPointSeg.cross(dirVec2); // 有向面积2
 
         // 有向面积比值，利用点乘是因为结果可能是正数或者负数
-        var num2 = vecS2.Dot(vecS1) / vecS1.magSqr();
+        var num2 = vecS2.dot(vecS1) / vecS1.magSqr();
+        var tempCord = p1.addSelf(dirVec1.mulSelf(num2));
 
-        intersection = p1 + dirVec1 * num2;
+        intersection.x = tempCord.x;
+        intersection.y = tempCord.y;
+        intersection.z = tempCord.z;
 
         return true;
     },
 
     findExtendPoint: function (point1, dirVec1, pointEdges, extendPoint) {
         // 最后发光点能不能直接投到角的所在边
-        var tempPoint = cc.Vec2.ZERO;
-        var nearPoint = cc.Vec2.ZERO;
+        var tempPoint = cc.Vec3.ZERO;
+        var nearPoint = cc.Vec3.ZERO;
         var nearEdgeId = 0;
 
         var nearDistance = 0;
 
         for (let i = 0; i < pointEdges.length; i++) {
-            const checkEdge = pointEdges[i];
+            const checkEdgeId = pointEdges[i];
 
-            if (point1.edgeId.indexOf(checkEdge) != -1) {
+            if (point1.edgeId.indexOf(checkEdgeId) != -1) {
                 // 排除发光点所在边
                 continue;
             }
 
-            var pos1 = this.edges[checkEdge].firstPos;
-            var pos2 = this.edges[checkEdge].secondPos;
+            var checkEdgeIndex = -1;
+            for (let index = 0; index < this.edges.length; index++) {
+                const edgeItem = this.edges[index];
+                if (edgeItem.idInWorld == checkEdgeId) {
+                    checkEdgeIndex = index;
+                    break;
+                }
+            }
+
+            if (checkEdgeIndex == -1) {
+                // 边的集合有错
+                cc.warn("边的集合有错，找不到边：%d", checkEdgeId);
+                return;
+            }
+            var checkEdge = this.edges[checkEdgeIndex];
+
+            var pos1 = checkEdge.firstPos;
+            var pos2 = checkEdge.secondPos;
 
             var edgeVec1 = pos1.sub(this.posInWorld);
             var edgeVec2 = pos2.sub(this.posInWorld);
@@ -303,17 +354,21 @@ cc.Class({
             var edgeVec = checkEdge.secondPos.sub(checkEdge.firstPos);
 
             // 找到最近的交点
-            if (this.LineLineIntersection(tempPoint, point1.posInWorld, dirVec1, checkEdge.firstPos, edgeVec)) {
-                let lenVec = cc.v2(tempPoint.sub(this.posInWorld));
+            if (this.LineLineIntersection(tempPoint,
+                    cc.v3(point1.posInWorld),
+                    cc.v3(dirVec1),
+                    cc.v3(checkEdge.firstPos),
+                    cc.v3(edgeVec))) {
+                let lenVec = cc.v3(tempPoint.sub(this.posInWorld));
                 var distance = lenVec.mag();
                 if (nearEdgeId == 0) {
-                    nearPoint = cc.v2(tempPoint);
+                    nearPoint = cc.v3(tempPoint);
                     nearDistance = distance;
-                    nearEdgeId = checkEdge;
+                    nearEdgeId = checkEdgeId;
                 } else if (distance < nearDistance) {
-                    nearPoint = cc.v2(tempPoint);
+                    nearPoint = cc.v3(tempPoint);
                     nearDistance = distance;
-                    nearEdgeId = checkEdge;
+                    nearEdgeId = checkEdgeId;
                 }
             }
         }
@@ -322,7 +377,7 @@ cc.Class({
             extendPoint.lightId = this.lightId;
             extendPoint.distance = nearDistance;
             extendPoint.isLight = true;
-            extendPoint.posInWorld = cc.v2(nearPoint);
+            extendPoint.posInWorld = cc.v3(nearPoint);
             extendPoint.edgeId.push(nearEdgeId);
         }
 
@@ -334,7 +389,7 @@ cc.Class({
         // 最后一个发光点和这个角是不是在不同边
         for (let index = 0; index < lastPoint.edgeId.length; index++) {
             const lastEdge = lastPoint.edgeId[index];
-            if (originPoint.edgeId.indexOf(lastEdge) != -1){
+            if (originPoint.edgeId.indexOf(lastEdge) != -1) {
                 return;
             }
         }
