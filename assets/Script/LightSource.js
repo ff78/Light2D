@@ -126,6 +126,11 @@ cc.Class({
         // 清空发光点
         this.lightPoints.length = 0;
 
+        // 获得遮罩画笔，用遮罩画笔来填充可显示区域
+        var extendMask = this.node.getChildByName("MaskNode").getComponent(cc.Mask);
+        var extGraphics = extendMask._graphics;
+        extGraphics.clear();
+
         // 发光点全放进数组
         for (let i = 0; i < this.cornersLight.length; i++) {
             const corner = this.cornersLight[i];
@@ -162,6 +167,7 @@ cc.Class({
 
         this.lineGraphics.clear();
 
+        // 同边的发光点连线用黄色表明点亮
         for (let k = 0; k < this.lightPoints.length; k++) {
             const linePoint = this.lightPoints[k];
             const lineNextPoint = this.lightPoints[(k + 1) % this.lightPoints.length];
@@ -189,7 +195,14 @@ cc.Class({
                 this.lineGraphics.lineTo(nextPointPos.x, nextPointPos.y);
                 this.lineGraphics.stroke();
             }
+
+            extGraphics.moveTo(pointPos.x, pointPos.y);
+            extGraphics.lineTo(nextPointPos.x, nextPointPos.y);
+            extGraphics.lineTo(0, 0);
+            extGraphics.lineTo(pointPos.x, pointPos.y);
+            extGraphics.fill();
         }
+        
     },
 
     checkCorners: function () {
