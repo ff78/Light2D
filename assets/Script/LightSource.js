@@ -36,6 +36,8 @@ cc.Class({
         
         // 有效发光点
         this.lightPoints = [];
+
+        this.hold = false;
     },
     
     start() {
@@ -58,6 +60,11 @@ cc.Class({
         window.globalEvent.on(Global.DETECT_CORNER, this.signCorners, this);
         window.globalEvent.on(Global.CHECK_CORNER, this.checkCorners, this);
         window.globalEvent.on(Global.LIGHT_WALL, this.lightWall, this);
+
+        this.node.on(cc.Node.EventType.MOUSE_DOWN, this.clickDown, this);
+        this.node.on(cc.Node.EventType.MOUSE_UP, this.clickUp, this);
+        this.node.on(cc.Node.EventType.MOUSE_MOVE, this.clickMove, this);
+
     },
 
     onDisable: function () {
@@ -67,6 +74,10 @@ cc.Class({
         window.globalEvent.off(Global.DETECT_CORNER, this.signCorners, this);
         window.globalEvent.off(Global.CHECK_CORNER, this.checkCorners, this);
         window.globalEvent.off(Global.LIGHT_WALL, this.lightWall, this);
+
+        this.node.off(cc.Node.EventType.MOUSE_DOWN, this.clickDown, this);
+        this.node.off(cc.Node.EventType.MOUSE_UP, this.clickUp, this);
+        this.node.off(cc.Node.EventType.MOUSE_MOVE, this.clickMove, this);
     },
 
 
@@ -310,8 +321,12 @@ cc.Class({
 
         // 有向面积比值，利用点乘是因为结果可能是正数或者负数
         var num2 = vecS2.dot(vecS1) / vecS1.magSqr();
+        
+        if (num2 < 0) {
+            // 因为是射线，只能正向延长，不能反向
+            return false;
+        }
         var tempCord = p1.addSelf(dirVec1.mulSelf(num2));
-
         intersection.x = tempCord.x;
         intersection.y = tempCord.y;
         intersection.z = tempCord.z;
@@ -426,9 +441,19 @@ cc.Class({
             // 角直接投到最后发光点的所在边
             this.lightPoints.push(extendPoint2);
         } else {
+            var checkEdgeId = [];
+            for (let index = 0; index < this.edges.length; index++) {
+                const edge = this.edges[index];
+
+                // if (lastPoint.edgeId.indexOf(edge.idInWorld) != -1 || originPoint.edgeId.indexOf(edge.idInWorld) != -1) {
+                //     continue;
+                // }
+                checkEdgeId.push(edge.idInWorld);
+            }
+
             // 投射到其他边
-            extend1 = this.findExtendPoint(lastPoint, dirVec1, this.edges, extendPoint1);
-            extend2 = this.findExtendPoint(originPoint, dirVec2, this.edges, extendPoint2);
+            extend1 = this.findExtendPoint(lastPoint, dirVec1, checkEdgeId, extendPoint1);
+            extend2 = this.findExtendPoint(originPoint, dirVec2, checkEdgeId, extendPoint2);
             if (extend1 != extend2) {
                 cc.warn("投射到其他边出问题");
             }
@@ -436,5 +461,26 @@ cc.Class({
             this.lightPoints.push(extendPoint2);
         }
 
-    }
+    },
+
+    clickDown: function(event) {
+        // cc.log("click me");
+        this.hold = true;
+    },
+    clickUp: function(event) {
+        // cc.log("up me");
+        this.hold = false;
+    },
+
+    clickMove: function(event) {
+        if (this.hold == true) {
+            // cc.log("move me");
+            this.node.position = this.node.position.addSelf(event.getDelta());
+            this.posInWorld = this.posInWorld.addSelf(event.getDelta());
+
+            this.signCorners();
+            this.checkCorners();
+            this.lightWall();
+        }
+    },
 });
