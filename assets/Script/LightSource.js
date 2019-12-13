@@ -61,12 +61,14 @@ cc.Class({
         window.globalEvent.on(Global.CHECK_CORNER, this.checkCorners, this);
         window.globalEvent.on(Global.LIGHT_WALL, this.lightWall, this);
 
+        window.globalEvent.on("GAME_MOUSE_UP", this.clickUp, this);
+        
         this.node.on(cc.Node.EventType.MOUSE_DOWN, this.clickDown, this);
         this.node.on(cc.Node.EventType.MOUSE_UP, this.clickUp, this);
         this.node.on(cc.Node.EventType.MOUSE_MOVE, this.clickMove, this);
-
+        
     },
-
+    
     onDisable: function () {
         window.globalEvent.off(Global.TURN_LIGHT, this.turnLight, this);
         window.globalEvent.off(Global.UPDATE_CORNER, this.updateCorner, this);
@@ -74,6 +76,7 @@ cc.Class({
         window.globalEvent.off(Global.DETECT_CORNER, this.signCorners, this);
         window.globalEvent.off(Global.CHECK_CORNER, this.checkCorners, this);
         window.globalEvent.off(Global.LIGHT_WALL, this.lightWall, this);
+        window.globalEvent.off("GAME_MOUSE_UP", this.clickUp, this);
 
         this.node.off(cc.Node.EventType.MOUSE_DOWN, this.clickDown, this);
         this.node.off(cc.Node.EventType.MOUSE_UP, this.clickUp, this);
@@ -206,6 +209,8 @@ cc.Class({
                 this.lineGraphics.lineTo(nextPointPos.x, nextPointPos.y);
                 this.lineGraphics.stroke();
             }
+
+            cc.clippingNode();
 
             extGraphics.moveTo(pointPos.x, pointPos.y);
             extGraphics.lineTo(nextPointPos.x, nextPointPos.y);
@@ -466,15 +471,18 @@ cc.Class({
     clickDown: function(event) {
         // cc.log("click me");
         this.hold = true;
+        // event.stopPropagation();
     },
+
     clickUp: function(event) {
         // cc.log("up me");
         this.hold = false;
+        // event.stopPropagation();
     },
 
     clickMove: function(event) {
+        cc.log("move me");
         if (this.hold == true) {
-            // cc.log("move me");
             this.node.position = this.node.position.addSelf(event.getDelta());
             this.posInWorld = this.posInWorld.addSelf(event.getDelta());
 
@@ -482,5 +490,7 @@ cc.Class({
             this.checkCorners();
             this.lightWall();
         }
+
+        // event.stopPropagation();
     },
 });

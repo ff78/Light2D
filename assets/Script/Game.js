@@ -35,7 +35,8 @@ cc.Class({
     // onLoad () {},
 
     start () {
-
+        this.node.on(cc.Node.EventType.MOUSE_UP, this.clickUp, this);
+        this.node.on(cc.Node.EventType.MOUSE_MOVE, this.clickMove, this);
     },
 
     // update (dt) {},
@@ -65,4 +66,12 @@ cc.Class({
         // this.node.getChildByName("sign").visible = false;
 
     },
+
+    clickUp: function() {
+        window.globalEvent.emit("GAME_MOUSE_UP");
+    },
+
+    clickMove: function() {
+        window.globalEvent.emit("GAME_MOUSE_UP");
+    }
 });
