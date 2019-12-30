@@ -210,8 +210,6 @@ cc.Class({
                 this.lineGraphics.stroke();
             }
 
-            cc.clippingNode();
-
             extGraphics.moveTo(pointPos.x, pointPos.y);
             extGraphics.lineTo(nextPointPos.x, nextPointPos.y);
             extGraphics.lineTo(0, 0);
@@ -471,13 +469,13 @@ cc.Class({
     clickDown: function(event) {
         // cc.log("click me");
         this.hold = true;
-        // event.stopPropagation();
+        event.stopPropagation();
     },
 
     clickUp: function(event) {
         // cc.log("up me");
         this.hold = false;
-        // event.stopPropagation();
+        event.stopPropagation();
     },
 
     clickMove: function(event) {
@@ -491,6 +489,6 @@ cc.Class({
             this.lightWall();
         }
 
-        // event.stopPropagation();
+        event.stopPropagation();
     },
 });

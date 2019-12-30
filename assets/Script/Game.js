@@ -67,11 +67,11 @@ cc.Class({
 
     },
 
-    clickUp: function() {
-        window.globalEvent.emit("GAME_MOUSE_UP");
-    },
+    // clickUp: function() {
+    //     window.globalEvent.emit("GAME_MOUSE_UP");
+    // },
 
-    clickMove: function() {
-        window.globalEvent.emit("GAME_MOUSE_UP");
-    }
+    // clickMove: function() {
+    //     window.globalEvent.emit("GAME_MOUSE_UP");
+    // },
 });

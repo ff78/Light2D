@@ -179,5 +179,5 @@ cc.Class({
         }
 
         window.globalEvent.emit("UPDATE_CORNER", this.idInWorld, this.posInWorld, this.edgeId);
-    }
+    },
 });

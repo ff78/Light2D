@@ -139,5 +139,5 @@ cc.Class({
             return;
         }
         window.globalEvent.emit("UPDATE_EDGES", lightId, this.edges);
-    }
+    },
 });
