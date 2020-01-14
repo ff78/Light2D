@@ -61,11 +61,12 @@ cc.Class({
         window.globalEvent.on(Global.CHECK_CORNER, this.checkCorners, this);
         window.globalEvent.on(Global.LIGHT_WALL, this.lightWall, this);
 
-        window.globalEvent.on("GAME_MOUSE_UP", this.clickUp, this);
+        // window.globalEvent.on("GAME_MOUSE_UP", this.clickUp, this);
         
         this.node.on(cc.Node.EventType.MOUSE_DOWN, this.clickDown, this);
         this.node.on(cc.Node.EventType.MOUSE_UP, this.clickUp, this);
         this.node.on(cc.Node.EventType.MOUSE_MOVE, this.clickMove, this);
+        this.node.on(cc.Node.EventType.MOUSE_LEAVE, this.clickUp, this);
         
     },
     
@@ -76,10 +77,11 @@ cc.Class({
         window.globalEvent.off(Global.DETECT_CORNER, this.signCorners, this);
         window.globalEvent.off(Global.CHECK_CORNER, this.checkCorners, this);
         window.globalEvent.off(Global.LIGHT_WALL, this.lightWall, this);
-        window.globalEvent.off("GAME_MOUSE_UP", this.clickUp, this);
+        // window.globalEvent.off("GAME_MOUSE_UP", this.clickUp, this);
 
         this.node.off(cc.Node.EventType.MOUSE_DOWN, this.clickDown, this);
         this.node.off(cc.Node.EventType.MOUSE_UP, this.clickUp, this);
+        this.node.off(cc.Node.EventType.MOUSE_LEAVE, this.clickUp, this);
         this.node.off(cc.Node.EventType.MOUSE_MOVE, this.clickMove, this);
     },
 
